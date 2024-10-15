@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://static.skyrock.fm/static/9bGi7ICS6HK1VcLVfLl4Rg.Pe3MgMGYlIuO1snNRhDNFw.abf640g640.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <title>Skyrock</title>
+    <style>
+        body {
+            background: black;
+            color: white;
+            text-align: center;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            cursor: none;
+        }
+        #logo {
+            width: 300px;
+            margin: 10px 0;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+        #marquee {
+            position: fixed;
+            top: 80px;
+            width: 100%;
+            font-size: 36px;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        #marquee div {
+            display: inline-block;
+            padding-left: 100%;
+            animation: marquee 12s linear infinite;
+        }
+        @keyframes marquee {
+            0% { transform: translate(0); }
+            100% { transform: translate(-100%); }
+        }
+        #info-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+        #countdown {
+            font-size: 24px;
+            color: yellow;
+            margin-top: 10px;
+            transition: color 0.5s ease;
+        }
+        .blinking {
+            animation: blink 1s linear infinite;
+            color: red;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        #time-date {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 16px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div id="marquee"><div id="marquee-text">Chargement...</div></div>
+    <img id="logo" src="" alt="Logo de Skyrock">
+    <div id="info-container">
+        <div id="countdown">Temps restant : 00:00</div>
+    </div>
+    <div id="time-date">
+        <div id="current-time"></div>
+        <div id="current-date"></div>
+    </div>
+    <script>
+        const config = {
+            apiUrl: 'parisidf', 
+            pubOrSpeakText: 'PUB OU SPEAK',
+            pubOrSpeakImage: 'https://imgs.search.brave.com/s7WRRbhqd6vYhb-iJuZM1-AmbP6srpJiGJgm5DFSsh0/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9jZG4t/cmFkaW90aW1lLWxv/Z29zLnR1bmVpbi5j/b20vczI1MjMyZC5w/bmc',
+            countdownColor: 'yellow',
+            endTrackMessage: 'End of track',
+            updateIntervalMs: 1000,
+            apiRefreshIntervalMs: 1500
+        };
+
+        let countdownInterval, previousSong = '', isPlaying = false, isPubMode = false, endTime = null;
+
+        const fetchCurrentSong = async () => {
+            const res = await fetch(`https://skyrock.fm/api/v3/player/onair/${config.apiUrl}`);
+            const data = await res.json();
+            const now = new Date();
+            const delayedNow = new Date(now - 23000);
+            const lastSong = data?.schedule?.find(song => new Date(song.info.end) > delayedNow);
+            if (lastSong) {
+                const { artists, info: { title, cover_big_uri, end } } = lastSong;
+                const currentArtist = artists.map(a => a.name).join(", ");
+                const remainingTime = new Date(end) - delayedNow;
+                if (previousSong === `${currentArtist} - ${title}` && !isPubMode) return;
+                previousSong = `${currentArtist} - ${title}`;
+                document.getElementById('marquee-text').innerText = previousSong;
+                document.getElementById('logo').src = cover_big_uri;
+                isPubMode = false;
+                if (!isPlaying) startCountdown(end);
+            } else if (!isPubMode) {
+                isPubMode = true;
+                document.getElementById('marquee-text').innerText = config.pubOrSpeakText;
+                document.getElementById('logo').src = config.pubOrSpeakImage;
+            }
+        };
+
+        const startCountdown = (endTime) => {
+            clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+                const now = new Date();
+                const remainingTime = new Date(endTime) - (now - 23000);
+                const countdownElement = document.getElementById('countdown');
+                if (remainingTime <= 0) {
+                    clearInterval(countdownInterval);
+                    isPlaying = false;
+                    countdownElement.innerText = config.endTrackMessage;
+                    countdownElement.style.color = 'white';
+                    setTimeout(fetchCurrentSong, config.apiRefreshIntervalMs);
+                } else {
+                    const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+                    countdownElement.innerText = `Temps restant : ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    countdownElement.classList.toggle('blinking', remainingTime <= 15000);
+                    countdownElement.style.color = remainingTime <= 15000 ? 'red' : config.countdownColor;
+                }
+            }, config.updateIntervalMs);
+        };
+
+        const updateTimeAndDate = () => {
+            const now = new Date();
+            const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+            const date = now.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('current-time').innerText = time;
+            document.getElementById('current-date').innerText = date;
+        };
+
+        setInterval(fetchCurrentSong, config.apiRefreshIntervalMs);
+        setInterval(updateTimeAndDate, config.updateIntervalMs);
+        updateTimeAndDate();
+    </script>
+</body>
+</html>
