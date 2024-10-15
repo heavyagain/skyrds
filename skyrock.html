@@ -104,7 +104,7 @@
             const res = await fetch(`https://skyrock.fm/api/v3/player/onair/${config.apiUrl}`);
             const data = await res.json();
             const now = new Date();
-            const delayedNow = new Date(now - 23000);
+            const delayedNow = new Date(now - 22000);
             const lastSong = data?.schedule?.find(song => new Date(song.info.end) > delayedNow);
             if (lastSong) {
                 const { artists, info: { title, cover_big_uri, end } } = lastSong;
@@ -133,7 +133,7 @@
             clearInterval(countdownInterval);
             countdownInterval = setInterval(() => {
                 const now = new Date();
-                const remainingTime = new Date(endTime) - (now - 23000);
+                const remainingTime = new Date(endTime) - (now - 22000);
                 const countdownElement = document.getElementById('countdown');
                 if (remainingTime <= 0) {
                     clearInterval(countdownInterval);
