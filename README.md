@@ -21,7 +21,7 @@ Everything is shifted by 20s to be synchronized with the Skyrock audio stream
    git clone https://github.com/heavyagain/SkyRDS
    ```
 
-2. Open the `index.html` file in your web browser to run the application.
+2. Open the `skyrock.html` file in your web browser to run the application.
 
 ## How it Works
 
