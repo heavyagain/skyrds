@@ -115,11 +115,17 @@
                 document.getElementById('marquee-text').innerText = previousSong;
                 document.getElementById('logo').src = cover_big_uri;
                 isPubMode = false;
-                if (!isPlaying) startCountdown(end);
+                if (!isPlaying) {
+                    isPlaying = true; // Mettre à jour l'état de lecture
+                    startCountdown(end);
+                }
             } else if (!isPubMode) {
                 isPubMode = true;
                 document.getElementById('marquee-text').innerText = config.pubOrSpeakText;
                 document.getElementById('logo').src = config.pubOrSpeakImage;
+                isPlaying = false; // Mettre à jour l'état de lecture
+                clearInterval(countdownInterval); // Arrêter le compte à rebours
+                document.getElementById('countdown').innerText = `Temps restant : 00:00`; // Réinitialiser le compte à rebours
             }
         };
 
