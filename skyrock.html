@@ -89,7 +89,7 @@
     </div>
     <script>
         const config = {
-            apiUrl: 'parisidf', 
+            apiUrl: 'parisidf',
             pubOrSpeakText: 'PUB OU SPEAK',
             pubOrSpeakImage: 'https://imgs.search.brave.com/s7WRRbhqd6vYhb-iJuZM1-AmbP6srpJiGJgm5DFSsh0/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9jZG4t/cmFkaW90aW1lLWxv/Z29zLnR1bmVpbi5j/b20vczI1MjMyZC5w/bmc',
             countdownColor: 'yellow',
@@ -110,22 +110,22 @@
                 const { artists, info: { title, cover_big_uri, end } } = lastSong;
                 const currentArtist = artists.map(a => a.name).join(", ");
                 const remainingTime = new Date(end) - delayedNow;
-                if (previousSong === `${currentArtist} - ${title}` && !isPubMode) return;
-                previousSong = `${currentArtist} - ${title}`;
-                document.getElementById('marquee-text').innerText = previousSong;
-                document.getElementById('logo').src = cover_big_uri;
-                isPubMode = false;
-                if (!isPlaying) {
-                    isPlaying = true; // Mettre à jour l'état de lecture
+
+                if (previousSong !== `${currentArtist} - ${title}`) {
+                    previousSong = `${currentArtist} - ${title}`;
+                    document.getElementById('marquee-text').innerText = previousSong;
+                    document.getElementById('logo').src = cover_big_uri;
+                    isPubMode = false;
+                    isPlaying = true;
                     startCountdown(end);
                 }
             } else if (!isPubMode) {
                 isPubMode = true;
                 document.getElementById('marquee-text').innerText = config.pubOrSpeakText;
                 document.getElementById('logo').src = config.pubOrSpeakImage;
-                isPlaying = false; // Mettre à jour l'état de lecture
-                clearInterval(countdownInterval); // Arrêter le compte à rebours
-                document.getElementById('countdown').innerText = `Temps restant : 00:00`; // Réinitialiser le compte à rebours
+                isPlaying = false;
+                clearInterval(countdownInterval);
+                document.getElementById('countdown').innerText = `Temps restant : 00:00`;
             }
         };
 
@@ -135,12 +135,13 @@
                 const now = new Date();
                 const remainingTime = new Date(endTime) - (now - 22000);
                 const countdownElement = document.getElementById('countdown');
+
                 if (remainingTime <= 0) {
                     clearInterval(countdownInterval);
                     isPlaying = false;
                     countdownElement.innerText = config.endTrackMessage;
                     countdownElement.style.color = 'white';
-                    setTimeout(fetchCurrentSong, config.apiRefreshIntervalMs);
+                    fetchCurrentSong();
                 } else {
                     const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
                     const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
